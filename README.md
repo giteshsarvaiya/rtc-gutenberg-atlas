@@ -1,14 +1,57 @@
 # RTC Atlas
 
-A living architecture tracker for Gutenberg's Real-Time Collaboration (RTC) stack.
-A Cloudflare Worker polls `WordPress/gutenberg` on a cron schedule, finds merged PRs
-that touch a fixed set of RTC-relevant files, asks Cloudflare Workers AI to extract
-structured facts about each changed file, and serves a high-level layer map, a
-low-level per-file view, a PR timeline, and an RSS feed — all read from D1.
+A living architecture tracker for Gutenberg's Real-Time Collaboration (RTC) stack —
+live at **https://rtc-atlas.gitesh-sarvaiya82.workers.dev**.
 
 Scope is intentionally narrowed to RTC (`packages/sync`, the CRDT bridge in
 `packages/core-data`, the collaborators UI in `packages/editor`, and the PHP REST
 layer in `lib/compat/wordpress-*`) — see `src/registry.ts` for the exact watch-list.
+
+## Why I built this
+
+Whenever I start contributing somewhere new, I try to build the bigger picture
+first and then go top-down — understand the whole shape of a system before I
+worry about any one file in it. It's how I personally get to a meaningful
+understanding faster than reading code bottom-up ever does for me.
+
+RTC in Gutenberg is a good example of a system where that bigger picture isn't
+written down anywhere as a single page — it's spread across `packages/sync`,
+the CRDT bridge in `core-data`, the collaborators UI in `editor`, and the PHP
+REST layer, and it changes as PRs land. So instead of just writing myself a
+one-off note, I thought: why not make that "bigger picture" a living site,
+so anyone else contributing to RTC gets the same top-down starting point,
+without having to reconstruct it from scratch the way I did.
+
+This isn't necessarily *the* right way to learn a codebase — it's just the way
+I do it. If you use a different approach (bottom-up, test-first, pairing with
+someone who already knows it, whatever), I'd genuinely like to hear what works
+for you. And if this site actually helped you get oriented on the RTC/CRDT
+connection faster, that's the whole point of it existing.
+
+## How it works today
+
+1. A Cloudflare Cron Trigger polls the GitHub Search API every 20 minutes for
+   PRs merged into `WordPress/gutenberg`'s `trunk` since the last checkpoint.
+2. Each candidate PR's changed files are checked against `src/registry.ts` — a
+   checked-in, deterministic list of the five RTC components and their path
+   globs. PRs that don't touch a watched path are skipped entirely.
+3. For PRs that do match, Cloudflare Workers AI (`@cf/meta/llama-3.1-8b-instruct`)
+   is asked to summarize *only* the matched files' diffs — a one-line summary
+   plus added/removed/changed symbol names. It's never allowed to invent a new
+   component or reassign a file; that structure only ever comes from the
+   registry. Malformed AI output falls back to no summary rather than a
+   fabricated one.
+4. Results land in D1 (`file_facts`, `timeline`, `architecture_snapshot`,
+   `checkpoint`), and every page reads straight from there — so the site is
+   never more than one poll cycle behind reality, with no rebuild/redeploy step.
+5. The site itself has four views: a live Mermaid architecture diagram plus a
+   grounded sequence diagram (`/`), per-file facts grouped by component
+   (`/low-level`), a chronological PR timeline (`/timeline`), and an Atom feed
+   to subscribe to changes (`/feed.xml`).
+
+The live site's own "Architecture" page is honestly the best explanation of
+this — the diagrams there are generated from the same data this README is
+describing, and update as PRs land.
 
 ## Why polling, not a webhook
 
@@ -92,3 +135,27 @@ if present.
 - No email/push notifications — RSS only.
 - No auth/accounts — the site is read-only and public.
 - No support for repos/paths outside the RTC registry.
+
+## Future scope
+
+Roughly in the order I'd actually pick them up:
+
+- **Flag unmatched files, not just silently skip them.** Today, if a merged PR
+  touches a genuinely new RTC-relevant file/folder that isn't in
+  `src/registry.ts` yet, it's indistinguishable from a PR that's simply
+  irrelevant — nothing surfaces it. A lightweight "files that looked
+  RTC-adjacent but matched nothing" log would catch registry drift instead of
+  relying on someone noticing by hand.
+- **A real webhook instead of polling**, if a Gutenberg maintainer is ever
+  willing to install a GitHub App — would remove the 20-minute lag and the
+  unauthenticated rate-limit ceiling entirely.
+- **A `GITHUB_TOKEN` secret by default** to raise the rate limit headroom,
+  once polling frequency or PR volume actually needs it (not urgent today).
+- **Historical/versioned snapshots** of the architecture diagram itself, so
+  you could see how the RTC system's shape changed over months, not just the
+  current state plus a flat PR list.
+- **Direct Slack/webhook notifications** as an alternative to RSS, for teams
+  that want a push rather than a feed reader.
+- **Community review of the registry** — right now `src/registry.ts` is
+  maintained by hand; opening it up for RTC contributors to PR new paths into
+  it directly would keep it current without relying on one person noticing.

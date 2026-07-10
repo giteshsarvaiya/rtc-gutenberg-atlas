@@ -221,7 +221,11 @@ ${ body }
 </main>
 <footer class="site">
   <span>Tracking WordPress/gutenberg${ versionLink ? ` (${ versionLink })` : '' } · packages/sync, packages/core-data, lib/compat/wordpress-*/class-wp-sync-*</span>
-  <a href="https://profiles.wordpress.org/giteshsarvaiya/" target="_blank" rel="noopener">wordpress.org/giteshsarvaiya</a>
+  <span>
+    <a href="https://github.com/giteshsarvaiya/rtc-gutenberg-atlas" target="_blank" rel="noopener">source on GitHub</a>
+    &middot;
+    <a href="https://profiles.wordpress.org/giteshsarvaiya/" target="_blank" rel="noopener">wordpress.org/giteshsarvaiya</a>
+  </span>
 </footer>
 </body>
 </html>`;
