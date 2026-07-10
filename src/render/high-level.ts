@@ -1,6 +1,7 @@
 import type { Env } from '../types';
 import { REGISTRY } from '../registry';
 import { escapeHtml, page } from './layout';
+import { renderSequenceSection, renderTopologySection } from './topology';
 
 interface SnapshotRow {
 	component: string;
@@ -45,7 +46,9 @@ stack, from the block editor UI down to the <code>wp_postmeta</code> rows that s
 reload. This map updates automatically whenever a merged PR touches a watched file —
 see the <a href="/timeline">timeline</a> for what changed and when, or
 <a href="/low-level">files &amp; components</a> for per-file detail.</p>
-<div class="layers">${ layers || '<p class="empty">No data yet — waiting on the first poll.</p>' }</div>`;
+<div class="layers">${ layers || '<p class="empty">No data yet — waiting on the first poll.</p>' }</div>
+${ renderTopologySection() }
+${ renderSequenceSection() }`;
 
 	return page( 'Layer map', '/', body );
 }

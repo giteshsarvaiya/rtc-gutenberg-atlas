@@ -117,6 +117,27 @@ export function page( title: string, activePath: string, body: string ): string 
   .file-card .path { font-family: ui-monospace, monospace; font-size: 12.5px; word-break: break-all; }
   .file-card .fsummary { font-family: -apple-system, "Segoe UI", sans-serif; font-size: 14px; color: var(--text); margin: 6px 0 0; }
   .file-card .symbols { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+
+  .section-divider { margin: 48px 0 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .section-divider h2 { margin: 0 0 6px; }
+  .section-divider .desc { color: var(--text-muted); font-size: 15px; margin: 0 0 8px; max-width: 62ch; }
+
+  .topology-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .topology { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: 0; min-width: 780px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 16px 0; }
+  .lane { background: var(--surface); padding: 14px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .lane:last-child { border-right: none; }
+  .lane-head { font-family: ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding-bottom: 8px; margin-bottom: 2px; border-bottom: 2px solid var(--lane-color, var(--text-muted)); color: var(--lane-color, var(--text-muted)); }
+  .lane[data-domain="client"] { --lane-color: var(--accent); }
+  .lane[data-domain="server"] { --lane-color: var(--server); }
+  .lane[data-domain="db"] { --lane-color: var(--db); }
+  .node { font-family: -apple-system, "Segoe UI", sans-serif; font-size: 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; line-height: 1.4; }
+  .node .file { display: block; font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .flowline { text-align: center; font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-muted); }
+
+  .chip.actor-client { background: var(--accent-soft); color: var(--accent); }
+  .chip.actor-server { background: var(--server-soft); color: var(--server); }
+  .chip.actor-db { background: var(--db-soft); color: var(--db); }
+  .step .note { margin-top: 6px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-muted); background: var(--code-bg); border-radius: 6px; padding: 6px 10px; display: inline-block; }
 </style>
 </head>
 <body>
