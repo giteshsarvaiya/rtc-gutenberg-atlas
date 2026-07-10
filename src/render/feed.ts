@@ -9,7 +9,7 @@ function xmlEscape( s: string ): string {
 		.replace( /"/g, '&quot;' );
 }
 
-const SITE_URL = 'https://rtc-atlas.example.workers.dev'; // replace after first deploy
+const SITE_URL = 'https://rtc-atlas.gitesh-sarvaiya82.workers.dev';
 
 export async function renderFeed( env: Env ): Promise< string > {
 	const rows = await fetchTimelineRows( env, 50 );
