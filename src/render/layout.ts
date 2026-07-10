@@ -8,7 +8,7 @@ export function escapeHtml( s: string ): string {
 }
 
 const NAV = [
-	{ href: '/', label: 'Layer map' },
+	{ href: '/', label: 'Architecture' },
 	{ href: '/low-level', label: 'Files & components' },
 	{ href: '/timeline', label: 'Timeline' },
 	{ href: '/feed.xml', label: 'RSS' },
@@ -26,119 +26,112 @@ export function page( title: string, activePath: string, body: string ): string 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${ escapeHtml( title ) } — RTC Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
+  /*
+    Palette borrowed deliberately from the texty editor project
+    (app/globals.css): warm paper-and-ink, light-only, no color
+    accent. This is a single-theme commitment, not a missing
+    dark mode — component identity is carried by label + weight,
+    not hue.
+  */
   :root {
-    --bg: #F3F5F6; --surface: #FFFFFF; --border: #DCE2E5;
-    --text: #1B2027; --text-muted: #5B6570;
-    --accent: #146F67; --accent-soft: #E1F0EE;
-    --server: #9C5A22; --server-soft: #F5E9DB;
-    --db: #4B4F86; --db-soft: #E9E9F5;
-    --code-bg: #EAEDEE;
-    color-scheme: light dark;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #12151A; --surface: #191E25; --border: #2A3038;
-      --text: #E6E9ED; --text-muted: #96A1AC;
-      --accent: #4FC4B8; --accent-soft: rgba(79,196,184,.13);
-      --server: #E0A159; --server-soft: rgba(224,161,89,.13);
-      --db: #9B9FE0; --db-soft: rgba(155,159,224,.13);
-      --code-bg: #1F252D;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #12151A; --surface: #191E25; --border: #2A3038;
-    --text: #E6E9ED; --text-muted: #96A1AC;
-    --accent: #4FC4B8; --accent-soft: rgba(79,196,184,.13);
-    --server: #E0A159; --server-soft: rgba(224,161,89,.13);
-    --db: #9B9FE0; --db-soft: rgba(155,159,224,.13);
-    --code-bg: #1F252D;
-  }
-  :root[data-theme="light"] {
-    --bg: #F3F5F6; --surface: #FFFFFF; --border: #DCE2E5;
-    --text: #1B2027; --text-muted: #5B6570;
-    --accent: #146F67; --accent-soft: #E1F0EE;
-    --server: #9C5A22; --server-soft: #F5E9DB;
-    --db: #4B4F86; --db-soft: #E9E9F5;
-    --code-bg: #EAEDEE;
+    --bg: #FAFAF8;
+    --fg: #1C1917;
+    --muted: #78716C;
+    --border: #E7E5E4;
+    --surface: #F5F4F2;
+    --surface-2: #EFEDEA;
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
   body {
-    background: var(--bg); color: var(--text);
-    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    background: var(--bg); color: var(--fg);
+    font-family: "DM Sans", -apple-system, "Segoe UI", sans-serif;
     font-size: 17px; line-height: 1.6; margin: 0; padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--accent); }
-  code { font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace; background: var(--code-bg); padding: .1em .4em; border-radius: 3px; font-size: .85em; }
-  header.site { max-width: 960px; margin: 0 auto; padding: 40px 0 20px; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-  header.site h1 { font-family: ui-monospace, "JetBrains Mono", monospace; font-size: 18px; margin: 0; }
-  header.site h1 a { color: var(--text); text-decoration: none; }
+  a { color: var(--fg); text-decoration-color: var(--border); text-underline-offset: 2px; }
+  a:hover { text-decoration-color: var(--fg); }
+  code { font-family: "DM Mono", ui-monospace, Menlo, Consolas, monospace; background: var(--surface); padding: .1em .4em; border-radius: 3px; font-size: .85em; }
+  header.site { max-width: 960px; margin: 0 auto; padding: 40px 0 20px; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  header.site h1 { font-family: "Instrument Serif", Georgia, serif; font-size: 26px; font-style: italic; font-weight: 400; margin: 0; }
+  header.site h1 a { color: var(--fg); text-decoration: none; }
   nav.site { display: flex; gap: 6px; flex-wrap: wrap; }
-  nav.site a { font-family: ui-monospace, monospace; font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; color: var(--text-muted); border: 1px solid var(--border); border-radius: 100px; padding: 6px 14px; }
-  nav.site a[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
-  main { max-width: 960px; margin: 0 auto; }
-  h2 { font-family: ui-monospace, monospace; font-size: 20px; }
+  nav.site a { font-family: "DM Mono", monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; color: var(--muted); border: 1px solid var(--border); border-radius: 100px; padding: 6px 14px; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+  nav.site a:hover { color: var(--fg); border-color: var(--fg); }
+  nav.site a[aria-current="page"] { color: var(--fg); border-color: var(--fg); background: var(--surface); font-weight: 500; }
+  main { max-width: 960px; margin: 0 auto; padding-top: 32px; }
+  h2 { font-family: "DM Mono", monospace; font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
   table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
-  th { font-family: ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); text-align: left; padding: 0 12px 8px; border-bottom: 1px solid var(--border); font-weight: 500; }
-  td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-family: -apple-system, "Segoe UI", sans-serif; font-size: 14.5px; }
+  th { font-family: "DM Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: left; padding: 0 12px 8px; border-bottom: 1px solid var(--border); font-weight: 500; }
+  td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 14.5px; }
   td:first-child, th:first-child { padding-left: 0; }
   tr:last-child td { border-bottom: none; }
-  .chip { font-family: ui-monospace, monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; padding: 3px 8px; border-radius: 100px; display: inline-block; }
-  .chip.editor-ui, .chip.core-data-bridge, .chip.sync-engine { background: var(--accent-soft); color: var(--accent); }
-  .chip.php-rest { background: var(--server-soft); color: var(--server); }
-  .chip.db-footprint { background: var(--db-soft); color: var(--db); }
-  .empty { color: var(--text-muted); font-style: italic; padding: 24px 0; }
-  footer.site { max-width: 960px; margin: 48px auto 0; font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-muted); }
 
-  .layers { display: flex; flex-direction: column; gap: 2px; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04); margin: 16px 0; }
-  .layer { background: var(--surface); border: 1px solid var(--border); padding: 18px 22px; display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
-  .layer + .layer { border-top: none; }
-  .layer-tag { font-family: ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; padding-top: 3px; color: var(--accent); }
-  .layer-tag.php-rest { color: var(--server); }
-  .layer-tag.db-footprint { color: var(--db); }
-  .layer-body strong { display: block; font-family: -apple-system, "Segoe UI", sans-serif; font-size: 15.5px; margin-bottom: 4px; }
-  .layer-body .files { font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-muted); line-height: 1.8; word-break: break-all; }
+  /* Chips: monochrome by design (texty has no color accent). Component
+     identity is carried by the label text itself plus a stepped
+     surface tone, not by hue. */
+  .chip { font-family: "DM Mono", monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; padding: 3px 9px; border-radius: 100px; display: inline-block; background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
 
-  .timeline { position: relative; padding-left: 26px; margin-top: 16px; }
-  .timeline::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
-  .step { position: relative; padding-bottom: 22px; }
-  .step:last-child { padding-bottom: 0; }
-  .step::before { content: ""; position: absolute; left: -26px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
-  .step-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
-  .step-meta time { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--text-muted); }
-  .step p { margin: 0 0 4px; font-size: 15.5px; }
-  .step a.pr-link { font-family: -apple-system, "Segoe UI", sans-serif; font-weight: 600; text-decoration: none; }
-  .step .summary { font-size: 14.5px; color: var(--text-muted); font-family: -apple-system, "Segoe UI", sans-serif; }
+  .empty { color: var(--muted); font-style: italic; padding: 24px 0; font-family: "Instrument Serif", serif; font-size: 18px; }
+  footer.site { max-width: 960px; margin: 56px auto 0; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted); }
+  footer.site a { color: var(--muted); }
+  footer.site a:hover { color: var(--fg); }
 
-  .file-group { margin-bottom: 32px; }
-  .file-group h3 { font-family: ui-monospace, monospace; font-size: 15px; margin: 0 0 4px; }
-  .file-group .desc { color: var(--text-muted); font-size: 14px; margin: 0 0 14px; font-family: -apple-system, "Segoe UI", sans-serif; }
-  .file-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
-  .file-card .path { font-family: ui-monospace, monospace; font-size: 12.5px; word-break: break-all; }
-  .file-card .fsummary { font-family: -apple-system, "Segoe UI", sans-serif; font-size: 14px; color: var(--text); margin: 6px 0 0; }
-  .file-card .symbols { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+  .layers { display: flex; flex-direction: column; gap: 1px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin: 16px 0; background: var(--border); }
+  .layer { background: var(--bg); padding: 18px 22px; display: grid; grid-template-columns: 180px 1fr; gap: 20px; border-left: 3px solid var(--border); }
+  .layer:nth-child(odd) { background: var(--surface); }
+  .layer-tag { font-family: "DM Mono", monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; padding-top: 3px; color: var(--fg); }
+  .layer-body strong { display: block; font-family: "DM Sans", sans-serif; font-weight: 600; font-size: 15.5px; margin-bottom: 4px; }
+  .layer-body .files { font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted); line-height: 1.8; word-break: break-all; }
 
   .section-divider { margin: 48px 0 24px; padding-top: 24px; border-top: 1px solid var(--border); }
   .section-divider h2 { margin: 0 0 6px; }
-  .section-divider .desc { color: var(--text-muted); font-size: 15px; margin: 0 0 8px; max-width: 62ch; }
+  .section-divider .desc { color: var(--muted); font-size: 15px; margin: 0 0 8px; max-width: 62ch; }
 
-  .topology-wrap { overflow-x: auto; padding-bottom: 8px; }
-  .topology { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: 0; min-width: 780px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 16px 0; }
-  .lane { background: var(--surface); padding: 14px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
-  .lane:last-child { border-right: none; }
-  .lane-head { font-family: ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding-bottom: 8px; margin-bottom: 2px; border-bottom: 2px solid var(--lane-color, var(--text-muted)); color: var(--lane-color, var(--text-muted)); }
-  .lane[data-domain="client"] { --lane-color: var(--accent); }
-  .lane[data-domain="server"] { --lane-color: var(--server); }
-  .lane[data-domain="db"] { --lane-color: var(--db); }
-  .node { font-family: -apple-system, "Segoe UI", sans-serif; font-size: 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; line-height: 1.4; }
-  .node .file { display: block; font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-  .flowline { text-align: center; font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-muted); }
+  .mermaid-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; overflow-x: auto; }
 
-  .chip.actor-client { background: var(--accent-soft); color: var(--accent); }
-  .chip.actor-server { background: var(--server-soft); color: var(--server); }
-  .chip.actor-db { background: var(--db-soft); color: var(--db); }
-  .step .note { margin-top: 6px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-muted); background: var(--code-bg); border-radius: 6px; padding: 6px 10px; display: inline-block; }
+  .timeline { position: relative; padding-left: 26px; margin-top: 16px; }
+  .timeline::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 1px; background: var(--border); }
+  .step { position: relative; padding-bottom: 22px; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before { content: ""; position: absolute; left: -26px; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--bg); border: 2px solid var(--fg); }
+  .step-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .step-meta time { font-family: "DM Mono", monospace; font-size: 11.5px; color: var(--muted); }
+  .step p { margin: 0 0 4px; font-size: 15.5px; font-family: "Instrument Serif", Georgia, serif; }
+  .step a.pr-link { font-family: "DM Sans", sans-serif; font-weight: 600; text-decoration: none; color: var(--fg); }
+  .step .summary { font-size: 14.5px; color: var(--muted); font-family: "DM Sans", sans-serif; }
+  .step .note { margin-top: 6px; font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted); background: var(--surface-2); border-radius: 6px; padding: 6px 10px; display: inline-block; }
+
+  .file-group { margin-bottom: 32px; }
+  .file-group h3 { font-family: "DM Mono", monospace; font-size: 15px; margin: 0 0 4px; }
+  .file-group .desc { color: var(--muted); font-size: 14px; margin: 0 0 14px; font-family: "DM Sans", sans-serif; }
+  .file-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+  .file-card .path { font-family: "DM Mono", monospace; font-size: 12.5px; word-break: break-all; }
+  .file-card .fsummary { font-family: "Instrument Serif", Georgia, serif; font-size: 16px; color: var(--fg); margin: 6px 0 0; }
+  .file-card .symbols { font-family: "DM Mono", monospace; font-size: 11.5px; color: var(--muted); margin-top: 6px; }
 </style>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#FAFAF8',
+      primaryColor: '#F5F4F2',
+      primaryBorderColor: '#78716C',
+      primaryTextColor: '#1C1917',
+      lineColor: '#78716C',
+      secondaryColor: '#EFEDEA',
+      tertiaryColor: '#FAFAF8',
+      fontFamily: 'DM Sans, sans-serif',
+      fontSize: '14px',
+    },
+  });
+</script>
 </head>
 <body>
 <header class="site">
@@ -148,7 +141,10 @@ export function page( title: string, activePath: string, body: string ): string 
 <main>
 ${ body }
 </main>
-<footer class="site">Tracking WordPress/gutenberg · packages/sync, packages/core-data, lib/compat/wordpress-*/class-wp-sync-*</footer>
+<footer class="site">
+  <span>Tracking WordPress/gutenberg · packages/sync, packages/core-data, lib/compat/wordpress-*/class-wp-sync-*</span>
+  <a href="https://profiles.wordpress.org/giteshsarvaiya/" target="_blank" rel="noopener">wordpress.org/giteshsarvaiya</a>
+</footer>
 </body>
 </html>`;
 }

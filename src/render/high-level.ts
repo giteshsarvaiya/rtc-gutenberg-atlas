@@ -1,7 +1,7 @@
 import type { Env } from '../types';
 import { REGISTRY } from '../registry';
 import { escapeHtml, page } from './layout';
-import { renderSequenceSection, renderTopologySection } from './topology';
+import { renderMermaidArchitecture } from './mermaid-diagram';
 
 interface SnapshotRow {
 	component: string;
@@ -40,6 +40,8 @@ export async function renderHighLevel( env: Env ): Promise< string > {
 		} )
 		.join( '' );
 
+	const mermaidSection = await renderMermaidArchitecture( env );
+
 	const body = `
 <p style="max-width: 62ch;">Five components make up Gutenberg's Real-Time Collaboration
 stack, from the block editor UI down to the <code>wp_postmeta</code> rows that survive a
@@ -47,8 +49,7 @@ reload. This map updates automatically whenever a merged PR touches a watched fi
 see the <a href="/timeline">timeline</a> for what changed and when, or
 <a href="/low-level">files &amp; components</a> for per-file detail.</p>
 <div class="layers">${ layers || '<p class="empty">No data yet — waiting on the first poll.</p>' }</div>
-${ renderTopologySection() }
-${ renderSequenceSection() }`;
+${ mermaidSection }`;
 
-	return page( 'Layer map', '/', body );
+	return page( 'Architecture', '/', body );
 }
