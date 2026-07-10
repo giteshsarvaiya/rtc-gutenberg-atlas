@@ -22,8 +22,26 @@ export async function fetchTimelineRows( env: Env, limit = 100 ): Promise< Timel
 	return results ?? [];
 }
 
+async function fetchTrackingStartedAt( env: Env ): Promise< string | null > {
+	const row = await env.DB.prepare(
+		'SELECT started_at FROM checkpoint WHERE id = 1'
+	).first< { started_at: string | null } >();
+	return row?.started_at ?? null;
+}
+
+function formatDate( iso: string ): string {
+	return new Date( iso ).toLocaleString( 'en-US', {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+		timeZone: 'UTC',
+	} ) + ' UTC';
+}
+
 export async function renderTimeline( env: Env ): Promise< string > {
-	const rows = await fetchTimelineRows( env );
+	const [ rows, startedAt ] = await Promise.all( [
+		fetchTimelineRows( env ),
+		fetchTrackingStartedAt( env ),
+	] );
 
 	const steps = rows
 		.map( ( row ) => {
@@ -42,11 +60,16 @@ export async function renderTimeline( env: Env ): Promise< string > {
 		} )
 		.join( '' );
 
+	const trackingNote = startedAt
+		? `Tracking merges since <strong>${ escapeHtml( formatDate( startedAt ) ) }</strong> — anything merged before that date won't appear here.`
+		: 'Tracking hasn’t started yet.';
+
 	const body = `
 <p style="max-width: 62ch;">Every merged PR that touched an RTC-watched file, newest
 first. Subscribe via <a href="/feed.xml">RSS</a> to get notified as the architecture
 changes.</p>
-<div class="timeline">${ steps || '<p class="empty">No RTC-relevant merges recorded yet.</p>' }</div>`;
+<p class="mermaid-hint" style="margin: 0 0 20px;">${ trackingNote }</p>
+<div class="timeline">${ steps || '<p class="empty">No RTC-relevant merges recorded yet — check back after the next 20-minute poll, or once a real RTC-touching PR merges upstream.</p>' }</div>`;
 
 	return page( 'Timeline', '/timeline', body );
 }

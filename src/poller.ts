@@ -22,10 +22,20 @@ async function getCheckpoint( env: Env ): Promise< string | null > {
 	return row?.last_merged_at ?? null;
 }
 
-async function setCheckpoint( env: Env, lastMergedAt: string ): Promise< void > {
+/** Set once, at bootstrap, and never touched again — this is what "tracking
+ * since <date>" on the timeline page reflects, distinct from last_merged_at
+ * which keeps advancing as PRs are processed. */
+async function bootstrapCheckpoint( env: Env, now: string ): Promise< void > {
 	await env.DB.prepare(
-		`INSERT INTO checkpoint (id, last_merged_at, updated_at) VALUES (1, ?1, datetime('now'))
-		 ON CONFLICT(id) DO UPDATE SET last_merged_at = excluded.last_merged_at, updated_at = excluded.updated_at`
+		`INSERT INTO checkpoint (id, last_merged_at, started_at, updated_at) VALUES (1, ?1, ?1, datetime('now'))`
+	)
+		.bind( now )
+		.run();
+}
+
+async function advanceCheckpoint( env: Env, lastMergedAt: string ): Promise< void > {
+	await env.DB.prepare(
+		`UPDATE checkpoint SET last_merged_at = ?1, updated_at = datetime('now') WHERE id = 1`
 	)
 		.bind( lastMergedAt )
 		.run();
@@ -43,7 +53,7 @@ export async function pollOnce( env: Env ): Promise< PollResult > {
 
 	if ( ! existingCheckpoint ) {
 		const now = new Date().toISOString();
-		await setCheckpoint( env, now );
+		await bootstrapCheckpoint( env, now );
 		return {
 			bootstrapped: true,
 			candidatesSeen: 0,
@@ -172,7 +182,7 @@ export async function pollOnce( env: Env ): Promise< PollResult > {
 	}
 
 	if ( latestMergedAt !== existingCheckpoint ) {
-		await setCheckpoint( env, latestMergedAt );
+		await advanceCheckpoint( env, latestMergedAt );
 	}
 
 	return {
