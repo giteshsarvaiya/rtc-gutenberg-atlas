@@ -1,0 +1,23 @@
+name = "rtc-atlas"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Cron: poll GitHub every 20 minutes for merged PRs touching RTC paths.
+[triggers]
+crons = ["*/20 * * * *"]
+
+# Cloudflare Workers AI binding, used for structured diff summarization.
+[ai]
+binding = "AI"
+
+# D1 database for the checkpoint, timeline, file_facts and architecture_snapshot tables.
+# Create it first with: wrangler d1 create rtc_atlas
+# then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "rtc_atlas"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# Set with: wrangler secret put DEBUG_TOKEN
+# Guards the manual /debug/poll trigger route used for local/staging verification.

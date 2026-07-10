@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.dev.vars
+dist/
+
+# Real config with your account-specific D1 database_id.
+# Commit wrangler.toml.example instead; copy it locally to get started.
+wrangler.toml
