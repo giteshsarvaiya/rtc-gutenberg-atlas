@@ -93,6 +93,15 @@ export function page( title: string, activePath: string, body: string ): string 
   .section-divider .desc { color: var(--muted); font-size: 15px; margin: 0 0 8px; max-width: 62ch; }
 
   .mermaid-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+  .mermaid-hint { font-family: "DM Mono", monospace; font-size: 11.5px; color: var(--muted); margin: -8px 0 12px; }
+
+  .detail-panel { background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--fg); border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 12px; }
+  .detail-panel h3 { font-family: "DM Mono", monospace; font-size: 14px; margin: 0 0 4px; }
+  .detail-panel .desc { color: var(--muted); font-size: 13.5px; margin: 0 0 12px; }
+  .detail-panel .file-row { padding: 8px 0; border-top: 1px solid var(--border); }
+  .detail-panel .file-row:first-of-type { border-top: none; }
+  .detail-panel .file-row .path { font-family: "DM Mono", monospace; font-size: 12px; color: var(--fg); word-break: break-all; }
+  .detail-panel .file-row .fsummary { font-family: "DM Sans", sans-serif; font-size: 13.5px; color: var(--muted); margin: 3px 0 0; }
 
   .timeline { position: relative; padding-left: 26px; margin-top: 16px; }
   .timeline::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 1px; background: var(--border); }
@@ -116,8 +125,11 @@ export function page( title: string, activePath: string, body: string ): string 
 </style>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  // Default (strict) securityLevel — sanitization stays on. Click-to-expand
+  // is wired up ourselves below via plain DOM listeners on the rendered SVG,
+  // not Mermaid's own click-binding syntax, so no sanitization needs loosening.
   mermaid.initialize({
-    startOnLoad: true,
+    startOnLoad: false,
     theme: 'base',
     themeVariables: {
       background: '#FAFAF8',
@@ -131,6 +143,41 @@ export function page( title: string, activePath: string, body: string ): string 
       fontSize: '14px',
     },
   });
+
+  const RTC_NODE_TO_COMPONENT = {
+    ui: 'editor-ui',
+    cd: 'core-data-bridge',
+    se: 'sync-engine',
+    pr: 'php-rest',
+    db: 'db-footprint',
+  };
+
+  // Toggles the detail panel for a clicked component (rendered by
+  // src/render/mermaid-diagram.ts as hidden <div id="detail-{id}">
+  // elements); collapses any other open panel first.
+  window.rtcExpand = ( componentId ) => {
+    const target = document.getElementById( 'detail-' + componentId );
+    document.querySelectorAll( '.detail-panel' ).forEach( ( el ) => {
+      if ( el !== target ) el.hidden = true;
+    } );
+    if ( ! target ) return;
+    target.hidden = ! target.hidden;
+    if ( ! target.hidden ) {
+      target.scrollIntoView( { behavior: 'smooth', block: 'nearest' } );
+    }
+  };
+
+  window.addEventListener( 'DOMContentLoaded', async () => {
+    if ( ! document.querySelector( '.mermaid' ) ) return;
+    await mermaid.run();
+    document.querySelectorAll( '.mermaid .node' ).forEach( ( el ) => {
+      const match = /flowchart-([a-z]+)-/.exec( el.id );
+      const componentId = match && RTC_NODE_TO_COMPONENT[ match[ 1 ] ];
+      if ( ! componentId ) return;
+      el.style.cursor = 'pointer';
+      el.addEventListener( 'click', () => window.rtcExpand?.( componentId ) );
+    } );
+  } );
 </script>
 </head>
 <body>
