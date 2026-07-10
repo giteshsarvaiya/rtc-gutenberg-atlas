@@ -14,19 +14,42 @@ first and then go top-down — understand the whole shape of a system before I
 worry about any one file in it. It's how I personally get to a meaningful
 understanding faster than reading code bottom-up ever does for me.
 
-RTC in Gutenberg is a good example of a system where that bigger picture isn't
-written down anywhere as a single page — it's spread across `packages/sync`,
-the CRDT bridge in `core-data`, the collaborators UI in `editor`, and the PHP
-REST layer, and it changes as PRs land. So instead of just writing myself a
-one-off note, I thought: why not make that "bigger picture" a living site,
-so anyone else contributing to RTC gets the same top-down starting point,
-without having to reconstruct it from scratch the way I did.
+RTC in Gutenberg has good written docs for the sync layer specifically —
+`packages/sync/CODE.md` and the HTTP polling provider's README are genuinely
+thorough (see "Related documentation" below). What's missing is the bigger
+picture *across* packages: the sync layer, the CRDT bridge in `core-data`,
+the collaborators UI in `editor`, and the PHP REST layer aren't tied together
+anywhere as one page, and none of that documentation updates itself as PRs
+land. So instead of just writing myself a one-off note, I thought: why not
+make that whole-stack "bigger picture" a living site, so anyone else
+contributing to RTC gets the same top-down starting point, without having to
+reconstruct it from scratch the way I did.
 
 This isn't necessarily *the* right way to learn a codebase — it's just the way
 I do it. If you use a different approach (bottom-up, test-first, pairing with
 someone who already knows it, whatever), I'd genuinely like to hear what works
 for you. And if this site actually helped you get oriented on the RTC/CRDT
 connection faster, that's the whole point of it existing.
+
+## Related documentation
+
+This project complements, not replaces, the docs already in the gutenberg repo:
+
+- [`packages/sync/CODE.md`](https://github.com/WordPress/gutenberg/blob/trunk/packages/sync/CODE.md) —
+  the sync package's own architecture notes: CRDT document structure, sync
+  manager API, providers, persistence/invalidation, awareness, undo/redo.
+  Also links to the original
+  [make.wordpress.org RTC architecture post](https://make.wordpress.org/core/2023/07/13/real-time-collaboration-architecture/)
+  and the GitHub issue/discussion that started the feature.
+- [`packages/sync/src/providers/http-polling/README.md`](https://github.com/WordPress/gutenberg/blob/trunk/packages/sync/src/providers/http-polling/README.md) —
+  a detailed transport-level doc: architecture diagram, REST request/response
+  shape, sync protocol steps, compaction, error handling, known limitations.
+
+Both are static, hand-maintained, and scoped to `packages/sync`. RTC Atlas's
+angle is the opposite trade-off: broader (covers `core-data`'s awareness
+subsystem, the `editor` collaborators UI, and the PHP bootstrap too) but
+necessarily shallower per file, and it updates itself instead of needing an
+editor.
 
 ## How it works today
 
