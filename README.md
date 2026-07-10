@@ -33,7 +33,7 @@ connection faster, that's the whole point of it existing.
 
 ## Related documentation
 
-This project complements, not replaces, the docs already in the gutenberg repo:
+This project complements the docs already in the gutenberg repo:
 
 - [`packages/sync/CODE.md`](https://github.com/WordPress/gutenberg/blob/trunk/packages/sync/CODE.md) —
   the sync package's own architecture notes: CRDT document structure, sync
@@ -179,6 +179,3 @@ Roughly in the order I'd actually pick them up:
   current state plus a flat PR list.
 - **Direct Slack/webhook notifications** as an alternative to RSS, for teams
   that want a push rather than a feed reader.
-- **Community review of the registry** — right now `src/registry.ts` is
-  maintained by hand; opening it up for RTC contributors to PR new paths into
-  it directly would keep it current without relying on one person noticing.
