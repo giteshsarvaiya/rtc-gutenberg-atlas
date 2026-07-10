@@ -43,13 +43,14 @@ export async function renderHighLevel( env: Env ): Promise< string > {
 	const mermaidSection = await renderMermaidArchitecture( env );
 
 	const body = `
-<p style="max-width: 62ch;">Five components make up Gutenberg's Real-Time Collaboration
-stack, from the block editor UI down to the <code>wp_postmeta</code> rows that survive a
-reload. This map updates automatically whenever a merged PR touches a watched file —
-see the <a href="/timeline">timeline</a> for what changed and when, or
-<a href="/low-level">files &amp; components</a> for per-file detail.</p>
-<div class="layers">${ layers || '<p class="empty">No data yet — waiting on the first poll.</p>' }</div>
-${ mermaidSection }`;
+${ mermaidSection }
+<div class="section-divider">
+  <h2>Components</h2>
+  <p class="desc">The same five components, as a reference list. This updates automatically
+  whenever a merged PR touches a watched file — see the <a href="/timeline">timeline</a> for
+  what changed and when, or <a href="/low-level">files &amp; components</a> for per-file detail.</p>
+</div>
+<div class="layers">${ layers || '<p class="empty">No data yet — waiting on the first poll.</p>' }</div>`;
 
-	return page( 'Architecture', '/', body );
+	return page( env, 'Architecture', '/', body );
 }

@@ -2,6 +2,7 @@ import type { Env } from './types';
 import { matchFile } from './registry';
 import {
 	MAX_PRS_PER_RUN,
+	getLatestGutenbergRelease,
 	getPullFiles,
 	getPullMergedAt,
 	searchMergedPRsSince,
@@ -41,6 +42,19 @@ async function advanceCheckpoint( env: Env, lastMergedAt: string ): Promise< voi
 		.run();
 }
 
+/** Refreshes the cached Gutenberg version shown in the footer. Best-effort:
+ * failures are swallowed so a GitHub hiccup on this lookup never blocks the
+ * actual PR-tracking poll cycle. */
+async function refreshGutenbergVersion( env: Env ): Promise< void > {
+	const release = await getLatestGutenbergRelease( env );
+	if ( ! release ) return;
+	await env.DB.prepare(
+		`UPDATE checkpoint SET gutenberg_version = ?1, gutenberg_version_url = ?2 WHERE id = 1`
+	)
+		.bind( release.tag_name, release.html_url )
+		.run();
+}
+
 /**
  * Runs one poll cycle: finds newly merged PRs touching RTC paths, extracts
  * facts, and writes them to D1. On the very first run (no checkpoint yet)
@@ -54,6 +68,7 @@ export async function pollOnce( env: Env ): Promise< PollResult > {
 	if ( ! existingCheckpoint ) {
 		const now = new Date().toISOString();
 		await bootstrapCheckpoint( env, now );
+		await refreshGutenbergVersion( env );
 		return {
 			bootstrapped: true,
 			candidatesSeen: 0,
@@ -61,6 +76,8 @@ export async function pollOnce( env: Env ): Promise< PollResult > {
 			filesUpdated: 0,
 		};
 	}
+
+	await refreshGutenbergVersion( env );
 
 	const candidates = await searchMergedPRsSince( existingCheckpoint, env );
 	let prsMatched = 0;

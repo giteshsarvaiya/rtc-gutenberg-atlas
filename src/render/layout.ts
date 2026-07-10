@@ -1,3 +1,5 @@
+import type { Env } from '../types';
+
 export function escapeHtml( s: string ): string {
 	return s
 		.replace( /&/g, '&amp;' )
@@ -14,11 +16,29 @@ const NAV = [
 	{ href: '/feed.xml', label: 'RSS' },
 ];
 
-export function page( title: string, activePath: string, body: string ): string {
+interface GutenbergVersionRow {
+	gutenberg_version: string | null;
+	gutenberg_version_url: string | null;
+}
+
+export async function page(
+	env: Env,
+	title: string,
+	activePath: string,
+	body: string
+): Promise< string > {
 	const nav = NAV.map(
 		( item ) =>
 			`<a href="${ item.href }"${ item.href === activePath ? ' aria-current="page"' : '' }>${ item.label }</a>`
 	).join( '' );
+
+	const versionRow = await env.DB.prepare(
+		'SELECT gutenberg_version, gutenberg_version_url FROM checkpoint WHERE id = 1'
+	).first< GutenbergVersionRow >();
+	const versionLink =
+		versionRow?.gutenberg_version && versionRow?.gutenberg_version_url
+			? `<a href="${ escapeHtml( versionRow.gutenberg_version_url ) }" target="_blank" rel="noopener">Gutenberg ${ escapeHtml( versionRow.gutenberg_version ) }</a>`
+			: '';
 
 	return `<!doctype html>
 <html lang="en">
@@ -89,6 +109,7 @@ export function page( title: string, activePath: string, body: string ): string 
   .layer-body .files { font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted); line-height: 1.8; word-break: break-all; }
 
   .section-divider { margin: 48px 0 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+  main > .section-divider:first-child { margin-top: 0; padding-top: 0; border-top: none; }
   .section-divider h2 { margin: 0 0 6px; }
   .section-divider .desc { color: var(--muted); font-size: 15px; margin: 0 0 8px; max-width: 62ch; }
 
@@ -122,6 +143,16 @@ export function page( title: string, activePath: string, body: string ): string 
   .file-card .path { font-family: "DM Mono", monospace; font-size: 12.5px; word-break: break-all; }
   .file-card .fsummary { font-family: "Instrument Serif", Georgia, serif; font-size: 16px; color: var(--fg); margin: 6px 0 0; }
   .file-card .symbols { font-family: "DM Mono", monospace; font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+
+  @media (max-width: 640px) {
+    body { padding: 0 16px 64px; font-size: 16px; }
+    header.site { padding: 28px 0 16px; }
+    header.site h1 { font-size: 22px; }
+    main { padding-top: 24px; }
+    .layer { grid-template-columns: 1fr; gap: 6px; padding: 16px; }
+    .layer-tag { padding-top: 0; }
+    footer.site { flex-direction: column; gap: 4px; }
+  }
 </style>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
@@ -189,7 +220,7 @@ export function page( title: string, activePath: string, body: string ): string 
 ${ body }
 </main>
 <footer class="site">
-  <span>Tracking WordPress/gutenberg · packages/sync, packages/core-data, lib/compat/wordpress-*/class-wp-sync-*</span>
+  <span>Tracking WordPress/gutenberg${ versionLink ? ` (${ versionLink })` : '' } · packages/sync, packages/core-data, lib/compat/wordpress-*/class-wp-sync-*</span>
   <a href="https://profiles.wordpress.org/giteshsarvaiya/" target="_blank" rel="noopener">wordpress.org/giteshsarvaiya</a>
 </footer>
 </body>

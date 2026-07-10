@@ -60,5 +60,5 @@ watched file, updated in place as new changes land. Grouped by the same componen
 shown on the <a href="/">layer map</a>.</p>
 ${ groups }`;
 
-	return page( 'Files & components', '/low-level', body );
+	return page( env, 'Files & components', '/low-level', body );
 }

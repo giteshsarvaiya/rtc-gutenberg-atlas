@@ -77,3 +77,28 @@ export async function getPullFiles(
 	const url = `${ BASE }/repos/${ REPO }/pulls/${ prNumber }/files?per_page=100`;
 	return githubFetch< GitHubPullFile[] >( url, env );
 }
+
+export interface GutenbergRelease {
+	tag_name: string;
+	html_url: string;
+}
+
+/**
+ * Fetches the latest published Gutenberg release for the footer's version
+ * link. Returns null on any failure (e.g. no releases, transient API error)
+ * so the poller can just keep whatever version it last cached rather than
+ * failing the whole poll cycle over this one non-critical lookup.
+ */
+export async function getLatestGutenbergRelease(
+	env: Env
+): Promise< GutenbergRelease | null > {
+	try {
+		const release = await githubFetch< GutenbergRelease >(
+			`${ BASE }/repos/${ REPO }/releases/latest`,
+			env
+		);
+		return release;
+	} catch {
+		return null;
+	}
+}

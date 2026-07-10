@@ -71,5 +71,5 @@ changes.</p>
 <p class="mermaid-hint" style="margin: 0 0 20px;">${ trackingNote }</p>
 <div class="timeline">${ steps || '<p class="empty">No RTC-relevant merges recorded yet — check back after the next 20-minute poll, or once a real RTC-touching PR merges upstream.</p>' }</div>`;
 
-	return page( 'Timeline', '/timeline', body );
+	return page( env, 'Timeline', '/timeline', body );
 }

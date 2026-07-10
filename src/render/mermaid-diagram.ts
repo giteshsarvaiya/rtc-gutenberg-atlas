@@ -18,6 +18,7 @@ interface FactRow {
 	path: string;
 	component: string;
 	summary: string | null;
+	last_pr_number: number | null;
 }
 
 /** Mermaid node/label text is our own controlled strings (component labels,
@@ -45,9 +46,23 @@ export async function renderMermaidArchitecture( env: Env ): Promise< string > {
 			'SELECT component, COUNT(*) as n, MAX(last_pr_number) as last_pr FROM file_facts GROUP BY component'
 		).all< FactAggRow >(),
 		env.DB.prepare(
-			'SELECT path, component, summary FROM file_facts ORDER BY component, path'
+			'SELECT path, component, summary, last_pr_number FROM file_facts ORDER BY component, path'
 		).all< FactRow >(),
 	] );
+
+	const factsByPath = new Map(
+		( factsResult.results ?? [] ).map( ( r ) => [ r.path, r ] )
+	);
+
+	/** Annotates a sequence-diagram step with the real file behind it and,
+	 * when the poller has recorded one, the last PR that touched it — so the
+	 * diagram reflects actual tracked facts rather than being purely
+	 * hand-written prose, and updates on its own as new PRs land. */
+	function annotateStep( label: string, filePath: string ): string {
+		const fact = factsByPath.get( filePath );
+		const prPart = fact?.last_pr_number ? ` (last: PR #${ fact.last_pr_number })` : '';
+		return `${ safeLabel( label ) }<br/>${ filePath }${ prPart }`;
+	}
 
 	const snapshots = new Map(
 		( snapshotResult.results ?? [] ).map( ( r ) => [ r.component, r ] )
@@ -81,20 +96,24 @@ export async function renderMermaidArchitecture( env: Env ): Promise< string > {
 	const definition = `flowchart LR
   classDef default fill:#F5F4F2,stroke:#78716C,stroke-width:1px,color:#1C1917;
   classDef db fill:#EFEDEA,stroke:#1C1917,stroke-width:1px,color:#1C1917;
+  classDef peer fill:#FAFAF8,stroke:#78716C,stroke-width:1px,stroke-dasharray:3 3,color:#78716C;
 
-  subgraph client["Client (browser tab)"]
+  subgraph clientA["Client A — browser tab"]
     ui["${ nodeLabel( 'editor-ui' ) }"]
     cd["${ nodeLabel( 'core-data-bridge' ) }"]
     se["${ nodeLabel( 'sync-engine' ) }"]
   end
-  pr["${ nodeLabel( 'php-rest' ) }"]
-  db[("${ nodeLabel( 'db-footprint' ) }")]:::db
 
-  ui --> cd --> se
-  se -->|"poll every 20min"| pr
-  pr -->|"updates + awareness"| se
-  pr -->|"save"| db
-  db -.->|"replay on load"| se
+  pr["${ nodeLabel( 'php-rest' ) }<br/>/wp-sync/v1/updates + /save"]
+  db[("${ nodeLabel( 'db-footprint' ) }")]:::db
+  peerB["Other collaborators'<br/>browser tabs"]:::peer
+
+  ui -->|"types in a block"| cd -->|"applyPostChangesToCRDTDoc"| se
+  se <-->|"poll every 1-4s:<br/>Yjs updates + awareness"| pr
+  pr <-->|"same relay, filtered<br/>per client_id"| peerB
+  cd -.->|"on Save / autosave"| pr
+  pr -.->|"update_post_meta"| db
+  db -.->|"replay on load:<br/>Y.applyUpdateV2"| se
 `;
 
 	const componentOrder = [
@@ -142,6 +161,27 @@ export async function renderMermaidArchitecture( env: Env ): Promise< string > {
 		} )
 		.join( '' );
 
+	const sequenceDefinition = `sequenceDiagram
+  participant A as Client A
+  participant S as Server (wp-sync/v1)
+  participant DB as wp_postmeta
+  participant B as Client B
+
+  A->>A: type in a block (Redux action)
+  A->>A: ${ annotateStep( 'applyPostChangesToCRDTDoc — mutate local Y.Doc', 'packages/core-data/src/utils/crdt.ts' ) }
+  loop poll every 1-4s
+    A->>S: ${ annotateStep( 'POST /updates — updates, awareness, cursor', 'packages/sync/src/providers/http-polling/polling-manager.ts' ) }
+    S->>DB: ${ annotateStep( 'append to rolling update log', 'lib/compat/wordpress-7.1/class-wp-http-polling-sync-server.php' ) }
+    S-->>A: updates since cursor + merged awareness
+    S-->>B: same updates + awareness (on B's own poll tick)
+    B->>B: ${ annotateStep( 'Y.applyUpdateV2(update) — re-render blocks + cursor overlay', 'packages/sync/src/manager.ts' ) }
+  end
+  A->>S: ${ annotateStep( 'POST /save {room, doc} — on Save / autosave', 'packages/core-data/src/utils/save-crdt-doc.js' ) }
+  S->>DB: ${ annotateStep( 'update_post_meta(_crdt_document, doc)', 'lib/compat/wordpress-7.1/class-wp-sync-save-server.php' ) }
+  Note over DB,A: next time the post is opened
+  DB-->>A: ${ annotateStep( '_applyPersistedCrdtDoc replays doc via Y.applyUpdateV2', 'packages/sync/src/manager.ts' ) }
+`;
+
 	return `
 <div class="section-divider">
   <h2>Architecture — live</h2>
@@ -152,6 +192,24 @@ export async function renderMermaidArchitecture( env: Env ): Promise< string > {
 <div class="mermaid-wrap">
   <pre class="mermaid">${ definition }</pre>
 </div>
-<p class="mermaid-hint">Click a component to see its files.</p>
+<p class="mermaid-hint">
+  Solid arrows = live edit sync (polled every 1&ndash;4s while collaborators are active).
+  Dotted arrows = persistence (Save/autosave writing to <code>wp_postmeta</code>, and replay on
+  the next page load). "Other collaborators' browser tabs" stands in for every other peer in the
+  same room — the server relays the same polled updates to all of them, not just one.
+  Click a component box to see its files.
+</p>
+
+<div class="section-divider">
+  <h2>How a single edit propagates</h2>
+  <p class="desc">The same system as a sequence: one keystroke's full round trip to another
+  collaborator, plus what happens the next time the post is reopened. Each step names the real
+  file behind it, with the last PR that touched it when the poller has recorded one — so this
+  updates on its own as new merges land, the same as everything else on this page.</p>
+</div>
+<div class="mermaid-wrap">
+  <pre class="mermaid">${ sequenceDefinition }</pre>
+</div>
+
 ${ panels }`;
 }
