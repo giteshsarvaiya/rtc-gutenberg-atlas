@@ -28,11 +28,14 @@ export const REGISTRY: RegistryComponent[] = [
 		id: 'core-data-bridge',
 		label: 'core-data bridge',
 		description:
-			'Bridges Redux entity records to and from the Yjs CRDT document.',
+			'Bridges Redux entity records to and from the Yjs CRDT document, and tracks collaborator awareness state.',
 		globs: [
 			'packages/core-data/src/sync.ts',
 			'packages/core-data/src/utils/crdt*.ts',
+			'packages/core-data/src/utils/block-selection-history.ts',
 			'packages/core-data/src/utils/save-crdt-doc.js',
+			'packages/core-data/src/hooks/use-post-editor-awareness-state.ts',
+			'packages/core-data/src/awareness/**',
 		],
 	},
 	{
@@ -51,6 +54,7 @@ export const REGISTRY: RegistryComponent[] = [
 			'lib/compat/wordpress-*/class-wp-sync-*.php',
 			'lib/compat/wordpress-*/class-wp-http-polling-sync-server.php',
 			'lib/compat/wordpress-*/interface-wp-sync-storage.php',
+			'lib/compat/wordpress-*/collaboration.php',
 		],
 	},
 ];
